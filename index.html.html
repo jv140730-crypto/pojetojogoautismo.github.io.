@@ -1,0 +1,1905 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorriso Jurássico - Jogo</title>
+    <style>
+        /* ESTILOS GERAIS */
+        * { box-sizing: border-box; }
+
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100vh;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background-color: #2c3e50;
+        }
+
+        /* MODO CALMO - FILTRO GLOBAL */
+        body.modo-calmo-ativo {
+            filter: saturate(0.4) brightness(1.05) sepia(0.15);
+        }
+
+        /* MENU PRINCIPAL */
+        .background-container {
+            width: 100%; height: 100vh;
+            background-image: url('fundo.png');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 20px;
+        }
+
+        .game-logo {
+            max-width: 90vw; max-height: 25vh;
+            width: 400px; margin-bottom: 3vh;
+            z-index: 10; object-fit: contain;
+        }
+
+        .menu-wrapper {
+            display: flex; align-items: flex-end; justify-content: center;
+            width: 100%; max-width: 1000px; gap: 2vw;
+            position: relative; flex-wrap: wrap;
+        }
+
+        .character {
+            max-width: 22vw; max-height: 35vh;
+            width: 250px; object-fit: contain;
+        }
+
+        /* BOTÕES DO MENU */
+        .wood-btn {
+            border: none; color: #ffffff;
+            font-size: clamp(16px, 4vw, 22px);
+            font-weight: bold; text-transform: uppercase;
+            cursor: pointer; text-shadow: 2px 2px 2px #3e2723;
+            transition: all 0.2s ease;
+            display: flex; align-items: center; justify-content: center;
+            padding: 10px 20px;
+            min-height: 60px; border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            background-color: #8b4513;
+            min-width: clamp(220px, 45vw, 300px);
+        }
+
+        .wood-btn:hover { transform: scale(1.05); filter: brightness(1.1); }
+
+        .btn-jogar { background-image: url('botao_jogar.png'); }
+        .btn-continuar { background-image: url('botao_continuar.png'); }
+        .btn-calmo { background-image: url('botao_calmo.png'); }
+        .btn-config { background-image: url('botao_config.png'); }
+        .btn-creditos { background-image: url('botao_creditos.png'); }
+        .btn-sair { background-image: url('botao_sair.png'); }
+
+        /* TELAS DE JOGO */
+        .tela-jogo {
+            display: none;
+            width: 100%; height: 100vh;
+            position: absolute; top: 0; left: 0;
+            flex-direction: column; align-items: center;
+            justify-content: center; text-align: center;
+            z-index: 50;
+            animation: fadeIn 0.5s ease-in;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        #tela-historia { cursor: pointer; }
+
+        .btn-pular {
+            position: absolute;
+            bottom: 20px; right: 20px;
+            padding: 8px 15px;
+            font-size: 14px;
+            background: rgba(0,0,0,0.6);
+            color: white; border: 1px solid white;
+            border-radius: 5px; cursor: pointer;
+            z-index: 60;
+        }
+
+        /* CARREGAMENTO */
+        #tela-carregamento { background-image: url('fundo_carregamento.png'); }
+
+        .img-dr-casto {
+            max-height: 55vh;
+            max-width: 90vw;
+            object-fit: contain;
+            margin-bottom: 2vh;
+            animation: flutuar 3s ease-in-out infinite;
+            filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.3));
+        }
+
+        @keyframes flutuar {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .barra-fundo {
+            width: 70%; max-width: 500px;
+            height: 25px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 15px; border: 3px solid #8b4513;
+            overflow: hidden; margin-bottom: 4vh;
+            box-shadow: inset 0 3px 5px rgba(0,0,0,0.2);
+        }
+
+        .barra-progresso {
+            width: 0%; height: 100%;
+            background: linear-gradient(90deg, #f1c40f, #f39c12);
+            transition: width 0.1s;
+        }
+
+        .dica-container {
+            background: rgba(255, 255, 255, 0.95);
+            border: 4px solid #8b4513;
+            border-radius: 20px;
+            padding: 20px 30px;
+            width: 85%; max-width: 650px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+            display: flex; flex-direction: column; align-items: center;
+            color: #4a3018;
+        }
+
+        .dica-label {
+            background-color: #8b4513; color: white;
+            padding: 5px 15px; border-radius: 10px;
+            font-size: 14px; font-weight: bold;
+            margin-top: -35px; margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        /* ESTILOS FASE 1 */
+        #tela-fase1 { 
+            background: #dcedc1; 
+            padding: 20px;
+            justify-content: flex-start;
+            align-items: center;
+            position: relative;
+        }
+
+        /* OVERLAY DO HUD */
+        #ui-overlay-fase1 {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 15px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 600;
+            pointer-events: none;
+        }
+
+        /* FASE 1 - RESPONSIVO */
+        #gameContainer { 
+            position: relative; 
+            width: 1200px; 
+            height: 800px; 
+            background: #222; 
+            overflow: hidden; 
+            border: 6px solid #8b4513; 
+            border-radius: 20px; 
+            max-width: 95vw; 
+            max-height: 85vh;
+            width: min(95vw, 85vh * 1.5);
+            height: min(95vw / 1.5, 85vh);
+        }
+        
+        #gameCanvas { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            cursor: none; 
+            z-index: 10; 
+        }
+        
+        #videoOverlay { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: #000; 
+            z-index: 2000; 
+            display: none; 
+        }
+        
+        #transitionVideo { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+        }
+        
+        .hud-top { 
+            width: 100%; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+        }
+        
+        .stat-bubble { 
+            background: #ff6b6b; 
+            padding: 10px 20px; 
+            border: 4px solid #fff; 
+            border-radius: 50px; 
+            font-size: 24px; 
+            box-shadow: 0 4px 0 #b33939; 
+        }
+        
+        #cleanProgressContainer { 
+            width: 500px; 
+            height: 35px; 
+            background: #444; 
+            border: 5px solid #fff; 
+            border-radius: 25px; 
+            overflow: hidden; 
+            position: relative; 
+            box-shadow: 0 6px 0 rgba(0,0,0,0.3); 
+        }
+        
+        #cleanProgressBar { 
+            width: 100%; 
+            height: 100%; 
+            background: linear-gradient(to bottom, #00ff87, #00d1ff); 
+            transition: width 0.3s ease; 
+            border-radius: 15px; 
+        }
+        
+        #cleanText { 
+            position: absolute; 
+            width: 100%; 
+            text-align: center; 
+            top: 5px; 
+            font-weight: bold; 
+            color: #fff; 
+            text-shadow: 2px 2px #000; 
+            font-size: 18px; 
+        }
+
+        /* ============================================
+           TELA DE VITÓRIA - COBRE TODO O GAMECONTAINER
+           ============================================ */
+        #victoryScreen { 
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(74, 158, 255, 0.97); 
+            z-index: 9999; 
+            display: none; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            color: white; 
+            text-align: center;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        #victoryScreen h1 { 
+            font-size: clamp(48px, 8vw, 100px); 
+            color: #ffeb3b; 
+            margin: 0; 
+            text-shadow: 6px 6px #e67e22, -2px -2px #000; 
+        }
+        
+        .star-container { 
+            font-size: clamp(48px, 8vw, 80px); 
+            margin: 20px 0; 
+            display: flex; 
+            gap: 15px; 
+        }
+        
+        .star { 
+            color: #ccc; 
+            text-shadow: 4px 4px rgba(0,0,0,0.2); 
+        }
+        
+        .star.active { 
+            color: #ffce00; 
+            text-shadow: 0 0 20px #fffb00; 
+            animation: bounce 0.5s infinite alternate; 
+        }
+        
+        @keyframes bounce { 
+            from { transform: translateY(0); } 
+            to { transform: translateY(-10px); } 
+        }
+        
+        #victoryScreen p { 
+            font-size: clamp(18px, 3vw, 30px); 
+            background: rgba(0,0,0,0.2); 
+            padding: 10px 30px; 
+            border-radius: 30px; 
+        }
+        
+        #victoryScreen button { 
+            margin-top: 30px; 
+            padding: 20px 50px; 
+            font-size: clamp(20px, 3vw, 35px); 
+            background: #4CAF50; 
+            color: white; 
+            border: 6px solid #fff; 
+            border-radius: 50px; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            font-family: inherit; 
+        }
+        
+        #victoryScreen button:hover { 
+            transform: scale(1.1); 
+            background: #45a049; 
+        }
+
+        /* FASE 2 */
+        #game-container-f2 {
+            width: 800px;
+            height: 600px;
+            position: relative;
+            overflow: hidden;
+            background-color: #111;
+            background-image: url('assets/cenario_f2.png');
+            background-size: cover;
+            background-position: center;
+            border: 5px solid #8b4513;
+            transition: box-shadow 0.3s, filter 0.3s;
+            max-width: 90vw;
+            max-height: 75vh;
+            width: min(90vw, 75vh * (800/600));
+            height: min(90vw * (600/800), 75vh);
+        }
+
+        .frenzy-active {
+            animation: frenzyPulse 0.5s infinite alternate;
+        }
+
+        /* Modo Calmo: frenesi sem piscar */
+        body.modo-calmo-ativo .frenzy-active {
+            animation: none !important;
+            filter: none !important;
+        }
+
+        @keyframes frenzyPulse {
+            from { filter: brightness(1); }
+            to { filter: brightness(1.3); box-shadow: inset 0 0 100px #ff0000; }
+        }
+
+        #game-container-f2.slow-active {
+            box-shadow: inset 0 0 100px rgba(0, 255, 255, 0.5);
+        }
+
+        .f2-hud {
+            position: absolute;
+            width: 100%;
+            padding: 15px 20px; 
+            display: flex;
+            justify-content: space-between;
+            color: white;
+            z-index: 10;
+            font-weight: bold;
+            box-sizing: border-box;
+            align-items: center; 
+            height: 80px; 
+            top: 0;
+        }
+
+        .hud-bubble {
+            background: #ff6b6b;
+            padding: 8px 20px;
+            border: 4px solid #fff;
+            border-radius: 50px;
+            font-size: 22px;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            text-shadow: 2px 2px 0 #000;
+            box-shadow: 0 4px 0 #b33939;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #combo-display-f2 {
+            position: absolute;
+            top: 90px;
+            right: 20px;
+            color: #ffeb3b;
+            font-size: 24px;
+            font-family: 'Comic Sans MS', cursive;
+            text-shadow: 2px 2px 0 #000;
+            opacity: 0;
+            transition: transform 0.1s;
+        }
+
+        #effects-container-f2 {
+            position: absolute;
+            top: 90px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .effect-icon {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            padding: 10px;
+            font-size: 20px;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+            animation: glow 1.5s infinite alternate;
+        }
+
+        #custom-health-bar-f2 {
+            position: absolute;
+            top: 10px; 
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px; 
+            height: 80px; 
+            z-index: 100; 
+            pointer-events: none;
+        }
+
+        .health-component {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 350px; 
+            object-fit: contain;
+        }
+
+        .aura-bg { z-index: 101; opacity: 0.9; }        
+        #bar-inner-img-f2 { z-index: 102; }                
+        .bar-frame { z-index: 103; }                    
+        #tooth-img-f2 { z-index: 104; }                    
+
+        #f2-player {
+            position: absolute;
+            bottom: 30px;
+            width: 120px;
+            height: 120px;
+            z-index: 60;
+            cursor: grab;
+            touch-action: none;
+        }
+
+        .shield-aura {
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            border: 4px solid #00f2ff;
+            border-radius: 50%;
+            top: -14px;
+            left: -14px;
+            box-shadow: 0 0 20px #00f2ff, inset 0 0 20px #00f2ff;
+            animation: rotateShield 2s linear infinite;
+            z-index: 70;
+        }
+
+        @keyframes rotateShield {
+            from { transform: rotate(0deg); opacity: 0.6; }
+            50% { opacity: 1; }
+            to { transform: rotate(360deg); opacity: 0.6; }
+        }
+
+        .f2-item {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            z-index: 30;
+        }
+
+        .powerup {
+            animation: float 2s ease-in-out infinite, glow 1.5s infinite alternate;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 5px white); }
+            to { filter: drop-shadow(0 0 15px cyan); }
+        }
+
+        .screen-f2 {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            color: white; z-index: 200;
+        }
+
+        .hidden { display: none !important; }
+
+        /* ============================================
+           BOTÃO DE CONFIGURAÇÕES IN-GAME
+           ============================================ */
+        .btn-config-ingame {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 52px;
+            height: 52px;
+            z-index: 700;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            transition: transform 0.2s;
+            pointer-events: all;
+        }
+        .btn-config-ingame:hover { transform: scale(1.15) rotate(20deg); }
+        .btn-config-ingame img { width: 100%; height: 100%; object-fit: contain; }
+
+        /* Posição especial para fase1 (fora do gameContainer, no overlay) */
+        #ui-overlay-fase1 .btn-config-ingame {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+        }
+
+        /* ============================================
+           MODAL DE CONFIGURAÇÕES IN-GAME (PAUSA)
+           ============================================ */
+        #ingame-config-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+        #ingame-config-overlay.open {
+            display: flex;
+        }
+
+        #ingame-config-modal {
+            background: #eebb77;
+            border: 5px solid #8b4513;
+            border-radius: 20px;
+            padding: 40px 50px;
+            text-align: center;
+            min-width: 340px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+        }
+        #ingame-config-modal h3 {
+            margin: 0 0 10px;
+            font-size: 28px;
+            color: #4a3018;
+            text-shadow: 1px 1px 0 #fff;
+        }
+        #ingame-config-modal label {
+            font-size: 16px;
+            font-weight: bold;
+            color: #4a3018;
+        }
+        #ingame-config-modal input[type=range] {
+            width: 220px;
+        }
+        .ingame-btn-row {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .ingame-btn-row .wood-btn {
+            min-width: 130px;
+            font-size: 16px;
+        }
+
+        /* MODAIS LEGADOS */
+        #config-modal {
+            display: none; position: fixed;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #eebb77; border: 5px solid #8b4513;
+            padding: 30px; z-index: 1000; border-radius: 20px;
+        }
+
+        .modal-overlay {
+            display: none; position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 999;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .img-tutorial {
+            max-height: 60vh;
+            max-width: 90vw;
+            object-fit: contain;
+            margin-bottom: 20px;
+        }
+
+        /* CONTROLES FASE 2 */
+        #controls-container-f2 {
+            width: 800px;
+            display: flex;
+            justify-content: center;
+            gap: 100px; 
+            padding: 20px 0;
+            max-width: 90vw;
+        }
+
+        .move-btn { background: none; border: none; width: 120px; height: 120px; cursor: pointer; }
+        .move-btn img { width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+
+    <div class="modal-overlay" id="modal-overlay" onclick="fecharConfig()"></div>
+
+    <!-- ================================================
+         SISTEMA DE ÁUDIO GLOBAL
+         ================================================ -->
+    <!-- Musica Menu -->
+    <audio id="musica-menu" src="musica_menu_padrao.mp3" loop></audio>
+    <audio id="musica-menu-calmo" src="musica_menu_modocalmo.mp3" loop></audio>
+
+    <!-- Musica Transição/Introdução das fases -->
+    <audio id="musica-transicao" src="musica_transicao_padrao.mp3" loop></audio>
+
+    <!-- Musica Fase 1 e 2 -->
+    <audio id="musica-fase" src="musica_fase_padrao.mp3" loop></audio>
+    <audio id="musica-fase-calmo" src="musica_fase_modocalmo.mp3" loop></audio>
+
+    <!-- Efeito passagem de página -->
+    <audio id="sfx-pagina" src="sfx_pagina.mp3"></audio>
+
+    <!-- ================================================
+         MODAL DE CONFIGURAÇÕES IN-GAME (PAUSA)
+         ================================================ -->
+    <div id="ingame-config-overlay">
+        <div id="ingame-config-modal">
+            <h3>⚙️ PAUSADO</h3>
+            <label>Volume Música</label>
+            <input type="range" id="ingame-volume" min="0" max="100" value="70" oninput="ajustarVolumeGlobal(this.value)">
+            <div class="ingame-btn-row">
+                <button class="wood-btn" style="background-color:#4CAF50;" onclick="salvarProgressoEFechar()">💾 SALVAR</button>
+                <button class="wood-btn" style="background-color:#e67e22;" onclick="fecharIngameConfig()">▶ CONTINUAR</button>
+            </div>
+            <button class="wood-btn" style="background-color:#c0392b; margin-top:5px;" onclick="sairParaMenuIngame()">🏠 SAIR AO MENU</button>
+        </div>
+    </div>
+
+    <!-- MENU PRINCIPAL -->
+    <div class="background-container" id="main-menu">
+        <img src="titulo_logo.png" alt="Logo" class="game-logo">
+        <div class="menu-wrapper">
+            <img src="arara.png" alt="Arara" class="character">
+            <div class="menu-buttons">
+                <button class="wood-btn btn-jogar" onclick="iniciarFluxoJogo()">Jogar</button>
+                <button class="wood-btn btn-continuar" onclick="continuar()">Continuar</button>
+                <button class="wood-btn btn-calmo" id="btn-calmo" onclick="toggleModoCalmo()">Modo Calmo: OFF</button>
+                <button class="wood-btn btn-config" onclick="abrirConfig()">Configuração</button>
+                <button class="wood-btn btn-creditos" onclick="creditos()">Créditos</button>
+                <button class="wood-btn btn-sair" onclick="sair()">Sair</button>
+            </div>
+            <img src="hipopotamo.png" alt="Hipo" class="character">
+        </div>
+    </div>
+
+    <div id="tela-historia" class="tela-jogo" onclick="avancarHistoria()">
+        <button class="btn-pular" onclick="pularHistoria(event)">PULAR ➔</button>
+    </div>
+
+    <div id="tela-carregamento" class="tela-jogo">
+        <img src="" id="img-dica" class="img-dr-casto" alt="Dica do Jogo">
+        <div class="barra-fundo"><div id="barra-progresso" class="barra-progresso"></div></div>
+        <div class="dica-container">
+            <div class="dica-label">DICAS SOBRE O JOGO</div>
+            <div id="dica-titulo" class="dica-titulo"></div>
+            <div id="dica-subtexto" class="dica-subtexto"></div>
+            <div id="dica-inferior" class="dica-inferior"></div>
+        </div>
+    </div>
+
+    <div id="tela-tutorial" class="tela-jogo">
+        <img src="como_jogar.png" alt="Como Jogar" class="img-tutorial">
+        <button class="wood-btn" onclick="iniciarFase1()">INICIAR MISSÃO</button>
+    </div>
+
+    <div id="tela-fase1" class="tela-jogo">
+
+        <!-- HUD + botão config in-game -->
+        <div id="ui-overlay-fase1">
+            <div class="hud-top">
+                <div class="stat-bubble">Fase: <span id="currentMode">1</span>/3</div>
+                <div id="cleanProgressContainer">
+                    <div id="cleanProgressBar"></div>
+                    <div id="cleanText">LIMPEZA: <span id="cleanedPercent">100</span>%</div>
+                </div>
+                <div class="stat-bubble">⏱️ <span id="timerDisplay">00:00</span></div>
+            </div>
+            <div class="stat-bubble" style="background: #4ecdc4; margin-top: -10px;">Pontos: <span id="scoreDisplay">0</span> <span style="color: #ffce00;">⭐</span></div>
+
+            <!-- Botão de config in-game fase 1 -->
+            <button class="btn-config-ingame" onclick="abrirIngameConfig('fase1')" title="Configurações">
+                <img src="icone_config.png" alt="Config">
+            </button>
+        </div>
+
+        <div id="gameContainer">
+            <canvas id="gameCanvas"></canvas>
+            <div id="videoOverlay"><video id="transitionVideo" muted playsinline></video></div>
+        </div>
+    </div>
+
+    <!-- TELA DE VITÓRIA - FORA DO gameContainer, cobre tela toda -->
+    <div id="victoryScreen">
+        <h1>SENSACIONAL!</h1>
+        <div class="star-container" id="starContainer">
+            <span class="star">★</span><span class="star">★</span><span class="star">★</span>
+        </div>
+        <p>Tempo Total: <span id="finalTime">00:00</span></p>
+        <p>Sua Pontuação: <span id="finalScore">0</span></p>
+        <button id="victoryBtn">CONTINUAR ➔</button>
+    </div>
+
+    <div id="tela-resultado-f1" class="tela-jogo" onclick="irParaIntroF2()"></div>
+    <div id="tela-intro-f2" class="tela-jogo" onclick="irParaContextoF2()"></div>
+    <div id="tela-contexto-f2" class="tela-jogo" onclick="iniciarCarregamentoParaTutorialF2()"></div>
+    
+    <div id="tela-tutorial-f2" class="tela-jogo">
+        <img src="como_jogar_f2.png" alt="Como Jogar Fase 2" class="img-tutorial">
+        <button class="wood-btn" onclick="prepararFase2()">COMEÇAR FASE 2</button>
+    </div>
+
+    <div id="tela-fase2" class="tela-jogo">
+        <div id="game-container-f2">
+            <div class="f2-hud">
+                <div class="hud-bubble">Pontos: <span id="ui-score-f2">0</span> <span style="color: #ffce00;">⭐</span></div>
+                <div class="hud-bubble">⏱️ Tempo: <span id="ui-time-f2">180</span></div>
+                <!-- Botão config in-game fase 2 -->
+                <button class="btn-config-ingame" onclick="abrirIngameConfig('fase2')" title="Configurações" style="pointer-events:all;">
+                    <img src="icone_config.png" alt="Config">
+                </button>
+            </div>
+
+            <div id="combo-display-f2"></div>
+            <div id="effects-container-f2"></div>
+
+            <div id="custom-health-bar-f2">
+                <img class="health-component aura-bg" src="assets/aura.png">
+                <img id="bar-inner-img-f2" class="health-component" src="assets/barra_dentro_100.png">
+                <img class="health-component bar-frame" src="assets/barra_moldura.png">
+                <img id="tooth-img-f2" class="health-component" src="assets/dente_100.png">
+            </div>
+
+            <div id="screen-start-f2" class="screen-f2">
+                <h1 style="color: #f1c40f;">SORRISO JURÁSSICO</h1>
+                <p>CONSIGA 50% DE DESEMPENHO EM 180s!</p>
+                <button class="wood-btn" onclick="gameEngineF2.init()">JOGAR</button>
+            </div>
+
+            <div id="screen-game-over-f2" class="screen-f2 hidden">
+                <h1 id="end-title-f2"></h1>
+                <p id="end-stats-f2"></p>
+                <button class="wood-btn" onclick="finalizarFase2(true)">CONTINUAR ➔</button>
+            </div>
+
+            <div id="f2-player"></div>
+        </div>
+        <div id="controls-container-f2">
+            <button id="btn-left-f2" class="move-btn"><img src="assets/botao_esq.png"></button>
+            <button id="btn-right-f2" class="move-btn"><img src="assets/botao_dir.png"></button>
+        </div>
+    </div>
+
+    <div id="tela-resultado-f2" class="tela-jogo" onclick="irParaIntroF3()"></div>
+    <div id="tela-intro-f3" class="tela-jogo" onclick="irParaContextoF3()"></div>
+    <div id="tela-contexto-f3" class="tela-jogo" onclick="iniciarCarregamentoParaTutorialF3()"></div>
+    
+    <div id="tela-tutorial-f3" class="tela-jogo">
+        <img src="como_jogar_f3.png" alt="Como Jogar Fase 3" class="img-tutorial">
+        <button class="wood-btn" onclick="iniciarFase3()">INICIAR FASE 3</button>
+    </div>
+
+    <div id="tela-fase3" class="tela-jogo">
+        <h1 style="color: white;">FASE 3 EM BREVE...</h1>
+        <button class="wood-btn" onclick="location.reload()">VOLTAR AO MENU</button>
+    </div>
+
+    <div id="config-modal">
+        <h3>CONFIGURAÇÕES</h3>
+        <p>Volume Música</p>
+        <input type="range" id="volume" min="0" max="100" value="50" oninput="ajustarVolumeGlobal(this.value)">
+        <br><br>
+        <button class="wood-btn" style="min-width: 150px;" onclick="fecharConfig()">FECHAR</button>
+    </div>
+
+    <script>
+    /* ================================================
+       SISTEMA DE ÁUDIO
+       ================================================ */
+    const audioManager = {
+        currentMusic: null,
+        volume: 0.7,
+        modoCalmo: false,
+
+        _allMusic() {
+            return [
+                document.getElementById('musica-menu'),
+                document.getElementById('musica-menu-calmo'),
+                document.getElementById('musica-transicao'),
+                document.getElementById('musica-fase'),
+                document.getElementById('musica-fase-calmo')
+            ];
+        },
+
+        setVolume(v) {
+            this.volume = v / 100;
+            this._allMusic().forEach(a => { if(a) a.volume = this.volume; });
+        },
+
+        play(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (this.currentMusic === el && !el.paused) return;
+            this._allMusic().forEach(a => { if(a && a !== el) { a.pause(); a.currentTime = 0; } });
+            el.volume = this.volume;
+            el.currentTime = 0;
+            el.play().catch(() => {});
+            this.currentMusic = el;
+        },
+
+        stop(id) {
+            const el = document.getElementById(id);
+            if (el) { el.pause(); el.currentTime = 0; }
+            if (this.currentMusic === el) this.currentMusic = null;
+        },
+
+        stopAll() {
+            this._allMusic().forEach(a => { if(a) { a.pause(); a.currentTime = 0; } });
+            this.currentMusic = null;
+        },
+
+        pauseAll() {
+            this._allMusic().forEach(a => { if(a && !a.paused) a.pause(); });
+        },
+
+        resumeCurrent() {
+            if (this.currentMusic && this.currentMusic.paused) {
+                this.currentMusic.play().catch(() => {});
+            }
+        },
+
+        playMenu() {
+            this.play(this.modoCalmo ? 'musica-menu-calmo' : 'musica-menu');
+        },
+
+        playFase() {
+            this.play(this.modoCalmo ? 'musica-fase-calmo' : 'musica-fase');
+        },
+
+        playTransicao() {
+            this.play('musica-transicao');
+        },
+
+        sfxPagina() {
+            const sfx = document.getElementById('sfx-pagina');
+            if (sfx) { sfx.currentTime = 0; sfx.play().catch(() => {}); }
+        }
+    };
+
+    // Visibilidade da aba - pausa/retoma música
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            audioManager.pauseAll();
+        } else {
+            audioManager.resumeCurrent();
+        }
+    });
+
+    /* ================================================
+       MODO CALMO
+       ================================================ */
+    let modoCalmoAtivo = false;
+
+    function toggleModoCalmo() {
+        modoCalmoAtivo = !modoCalmoAtivo;
+        audioManager.modoCalmo = modoCalmoAtivo;
+
+        const btn = document.getElementById('btn-calmo');
+        btn.innerText = modoCalmoAtivo ? 'Modo Calmo: ON' : 'Modo Calmo: OFF';
+        document.body.classList.toggle('modo-calmo-ativo', modoCalmoAtivo);
+
+        // Troca música se estiver no menu
+        const menuVisivel = document.getElementById('main-menu').style.display !== 'none';
+        if (menuVisivel) audioManager.playMenu();
+
+        // Salvar preferência
+        salvarProgresso();
+    }
+
+    /* ================================================
+       VOLUME GLOBAL
+       ================================================ */
+    function ajustarVolumeGlobal(val) {
+        audioManager.setVolume(val);
+        // Sincroniza ambos os sliders
+        document.getElementById('volume').value = val;
+        document.getElementById('ingame-volume').value = val;
+    }
+
+    /* ================================================
+       SAVE / CONTINUE
+       ================================================ */
+    // Estados de navegação possíveis
+    const TELAS = {
+        'main-menu': 'menu',
+        'tela-historia': 'historia',
+        'tela-tutorial': 'tutorial_f1',
+        'tela-fase1': 'fase1',
+        'tela-resultado-f1': 'resultado_f1',
+        'tela-intro-f2': 'intro_f2',
+        'tela-contexto-f2': 'contexto_f2',
+        'tela-tutorial-f2': 'tutorial_f2',
+        'tela-fase2': 'fase2',
+        'tela-resultado-f2': 'resultado_f2',
+        'tela-intro-f3': 'intro_f3',
+        'tela-contexto-f3': 'contexto_f3',
+        'tela-tutorial-f3': 'tutorial_f3',
+        'tela-fase3': 'fase3',
+        'victoryScreen': 'victory_f1'
+    };
+
+    let telaAtual = 'main-menu';
+
+    function salvarProgresso(telaId) {
+        const id = telaId || telaAtual;
+        const save = {
+            tela: id,
+            modoCalmo: modoCalmoAtivo,
+            volume: audioManager.volume * 100,
+            paginaHistoria: paginaAtual
+        };
+        localStorage.setItem('sorriso_save', JSON.stringify(save));
+    }
+
+    function carregarProgresso() {
+        try {
+            const raw = localStorage.getItem('sorriso_save');
+            if (!raw) return null;
+            return JSON.parse(raw);
+        } catch(e) { return null; }
+    }
+
+    function continuar() {
+        const save = carregarProgresso();
+        if (!save || !save.tela) {
+            alert("Nenhum progresso salvo.");
+            return;
+        }
+
+        // Restaurar configurações
+        if (save.modoCalmo !== undefined && save.modoCalmo !== modoCalmoAtivo) {
+            modoCalmoAtivo = save.modoCalmo;
+            audioManager.modoCalmo = modoCalmoAtivo;
+            document.body.classList.toggle('modo-calmo-ativo', modoCalmoAtivo);
+            document.getElementById('btn-calmo').innerText = modoCalmoAtivo ? 'Modo Calmo: ON' : 'Modo Calmo: OFF';
+        }
+        if (save.volume !== undefined) {
+            ajustarVolumeGlobal(save.volume);
+        }
+
+        // Navegar para tela salva
+        const tela = save.tela;
+        audioManager.stopAll();
+        document.getElementById('main-menu').style.display = 'none';
+
+        const mapeamento = {
+            'menu': () => { document.getElementById('main-menu').style.display = 'flex'; audioManager.playMenu(); },
+            'historia': () => { paginaAtual = save.paginaHistoria || 1; mostrarPaginaHistoria(); document.getElementById('tela-historia').style.display = 'flex'; audioManager.playTransicao(); },
+            'tutorial_f1': () => { document.getElementById('tela-tutorial').style.display = 'flex'; audioManager.playTransicao(); },
+            'fase1': () => { iniciarFase1(); },
+            'resultado_f1': () => { document.getElementById('tela-resultado-f1').style.display = 'flex'; audioManager.playTransicao(); },
+            'victory_f1': () => { document.getElementById('victoryScreen').style.display = 'flex'; audioManager.playTransicao(); },
+            'intro_f2': () => { document.getElementById('tela-intro-f2').style.display = 'flex'; audioManager.playTransicao(); },
+            'contexto_f2': () => { document.getElementById('tela-contexto-f2').style.display = 'flex'; audioManager.playTransicao(); },
+            'tutorial_f2': () => { document.getElementById('tela-tutorial-f2').style.display = 'flex'; audioManager.playTransicao(); },
+            'fase2': () => { prepararFase2(); },
+            'resultado_f2': () => { document.getElementById('tela-resultado-f2').style.display = 'flex'; audioManager.playTransicao(); },
+            'intro_f3': () => { document.getElementById('tela-intro-f3').style.display = 'flex'; audioManager.playTransicao(); },
+            'contexto_f3': () => { document.getElementById('tela-contexto-f3').style.display = 'flex'; audioManager.playTransicao(); },
+            'tutorial_f3': () => { document.getElementById('tela-tutorial-f3').style.display = 'flex'; audioManager.playTransicao(); },
+            'fase3': () => { document.getElementById('tela-fase3').style.display = 'flex'; }
+        };
+
+        if (mapeamento[tela]) mapeamento[tela]();
+        telaAtual = tela;
+    }
+
+    /* ================================================
+       CONFIG IN-GAME (PAUSA)
+       ================================================ */
+    let fasePausada = null;
+
+    function abrirIngameConfig(fase) {
+        fasePausada = fase;
+
+        // Pausa a engine correspondente
+        if (fase === 'fase1' && fase1Engine) fase1Engine.pausar();
+        if (fase === 'fase2') gameEngineF2.pausar();
+
+        // Sincroniza slider
+        document.getElementById('ingame-volume').value = audioManager.volume * 100;
+
+        document.getElementById('ingame-config-overlay').classList.add('open');
+    }
+
+    function fecharIngameConfig() {
+        document.getElementById('ingame-config-overlay').classList.remove('open');
+
+        // Retoma engine
+        if (fasePausada === 'fase1' && fase1Engine) fase1Engine.retomar();
+        if (fasePausada === 'fase2') gameEngineF2.retomar();
+
+        fasePausada = null;
+    }
+
+    function salvarProgressoEFechar() {
+        salvarProgresso(fasePausada === 'fase1' ? 'fase1' : 'fase2');
+        fecharIngameConfig();
+    }
+
+    function sairParaMenuIngame() {
+        document.getElementById('ingame-config-overlay').classList.remove('open');
+
+        // Para engines
+        if (fase1Engine) { fase1Engine.stop(); fase1Engine = null; }
+        if (gameEngineF2.running) gameEngineF2.end(false);
+
+        // Esconde todas as telas
+        document.querySelectorAll('.tela-jogo').forEach(t => t.style.display = 'none');
+        document.getElementById('victoryScreen').style.display = 'none';
+        document.getElementById('main-menu').style.display = 'flex';
+
+        audioManager.stopAll();
+        audioManager.playMenu();
+        telaAtual = 'main-menu';
+        fasePausada = null;
+    }
+
+    /* ================================================
+       CONFIGURAÇÕES GERAIS
+       ================================================ */
+    let paginaAtual = 1;
+    const totalPaginas = 11;
+    const bancoDicas = [
+        { img: "dica_rotina.png", titulo: "Crie Sua Rotina de Cuidado!", subtexto: "Escove sempre na mesma ordem, use um cronômetro de 2 minutos.", inferior: "Você sabia? Escovar remove a 'placa'." },
+        { img: "dica_escova.png", titulo: "Cuide da Sua Escova!", subtexto: "Use cerdas macias, troque a escova a cada 3 meses.", inferior: "Astronautas usam escovas especiais!" }
+    ];
+
+    /* ================================================
+       MOTOR FASE 1
+       ================================================ */
+    let fase1Engine = null;
+
+    class MestreDoSorriso {
+        constructor() {
+            this.canvas = document.getElementById('gameCanvas');
+            this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
+            this.canvas.width = 1200;
+            this.canvas.height = 800;
+            this.currentMode = 1;
+            this.assets = {};
+            this.sujeiraObjects = []; 
+            this.bacterias = []; 
+            this.particles = [];
+            this.brush = { x: 0, y: 0 };
+            this.lastBrushPos = { x: 0, y: 0 };
+            this.isTransitioning = true; 
+            this.pontuacao = 0;
+            this.lastKeyTime = 0;
+            this.isHolding = false;
+            this.running = false;
+            this.isPaused = false;
+
+            this.startTime = Date.now();
+            this.phaseStartTime = Date.now();
+            this.totalSeconds = 0;
+            this.starPenalty = 0;
+            this.gameLoopId = null;
+            this._timerInterval = null;
+        }
+
+        pausar() {
+            this.isPaused = true;
+            if (this.gameLoopId) cancelAnimationFrame(this.gameLoopId);
+        }
+
+        retomar() {
+            if (!this.isPaused) return;
+            this.isPaused = false;
+            // Corrige o startTime para não contar o tempo pausado
+            this.startTime += (Date.now() - this._pauseStart);
+            this.gameLoopId = requestAnimationFrame(() => this.gameLoop());
+        }
+
+        async init() {
+            await this.loadAssets();
+            this.setupEventListeners();
+            await this.startMode(1);
+            this.updateTimer();
+            this.running = true;
+            this.gameLoopId = requestAnimationFrame(() => this.gameLoop());
+        }
+
+        updateTimer() {
+            if (this._timerInterval) clearInterval(this._timerInterval);
+            this._timerInterval = setInterval(() => {
+                if (!this.isTransitioning && !this.isPaused) {
+                    this.totalSeconds = Math.floor((Date.now() - this.startTime) / 1000);
+                    const mins = Math.floor(this.totalSeconds / 60).toString().padStart(2, '0');
+                    const secs = (this.totalSeconds % 60).toString().padStart(2, '0');
+                    document.getElementById('timerDisplay').textContent = `${mins}:${secs}`;
+                }
+            }, 1000);
+        }
+
+        async loadAssets() {
+            const imgs = ['escova.png', 'espuma.png', 'lingua.png', 'background_modo1.png', 'background_modo2.png', 'background_modo3.png'];
+            await Promise.all(imgs.map(src => this.loadImage(src)));
+        }
+
+        loadImage(src) {
+            return new Promise(r => {
+                const i = new Image();
+                i.onload = () => { this.assets[src] = i; r(); };
+                i.onerror = () => r();
+                i.src = src;
+            });
+        }
+
+        setupEventListeners() {
+            const updateBrushPosition = (clientX, clientY) => {
+                const r = this.canvas.getBoundingClientRect();
+                this.brush.x = (clientX - r.left) * (this.canvas.width / r.width);
+                this.brush.y = (clientY - r.top) * (this.canvas.height / r.height);
+            };
+
+            this.canvas.addEventListener('mousedown', e => {
+                if (!this.isPaused) { this.isHolding = true; updateBrushPosition(e.clientX, e.clientY); }
+            });
+            this.canvas.addEventListener('mousemove', e => {
+                if (this.isHolding && !this.isPaused) updateBrushPosition(e.clientX, e.clientY);
+            });
+            window.addEventListener('mouseup', () => { this.isHolding = false; });
+
+            this.canvas.addEventListener('touchstart', e => {
+                e.preventDefault();
+                if (!this.isPaused) { this.isHolding = true; updateBrushPosition(e.touches[0].clientX, e.touches[0].clientY); }
+            }, { passive: false });
+            this.canvas.addEventListener('touchmove', e => {
+                e.preventDefault();
+                if (this.isHolding && !this.isPaused) updateBrushPosition(e.touches[0].clientX, e.touches[0].clientY);
+            }, { passive: false });
+            window.addEventListener('touchend', () => { this.isHolding = false; });
+
+            window.addEventListener('keydown', e => {
+                if (e.key.toLowerCase() === 'p') {
+                    const now = Date.now();
+                    if (now - this.lastKeyTime < 300 && !this.isTransitioning) this.playTransition();
+                    this.lastKeyTime = now;
+                }
+            });
+        }
+
+        drawCoverImage(ctx, img) {
+            if (!img || img.width === 0) return;
+            const cRatio = 1200 / 800;
+            const iRatio = img.width / img.height;
+            let sw, sh, sx, sy;
+            if (iRatio > cRatio) { sw = img.height * cRatio; sh = img.height; sx = (img.width - sw) / 2; sy = 0; }
+            else { sw = img.width; sh = img.width / cRatio; sx = 0; sy = (img.height - sh) / 2; }
+            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 1200, 800);
+        }
+
+        async startMode(mode) {
+            this.isTransitioning = true;
+            this.currentMode = mode;
+            this.phaseStartTime = Date.now();
+            this.sujeiraObjects = [];
+            this.bacterias = [];
+            this.particles = [];
+            document.getElementById('currentMode').textContent = mode;
+            await this.prepareStage(mode);
+            this.totalInitialAlpha = this.sujeiraObjects.length + this.bacterias.length;
+            if(this.totalInitialAlpha === 0) this.totalInitialAlpha = 1; 
+            this.isTransitioning = false;
+        }
+
+        async prepareStage(mode) {
+            const assetMode = (mode === 3) ? 2 : mode;
+            const config = { 1: { rx: 6, vd: 6 }, 2: { rx: 10, vd: 8 }, 3: { rx: 10, vd: 8, skipR: [7, 8], skipV: [6, 7] } }[mode];
+            let rCount = 0, vCount = 0;
+            for (let q = 1; q <= 4; q++) {
+                for (let i = 1; i <= 8; i++) {
+                    let fdi = parseInt(`${q}${i}`);
+                    if (mode === 3 && [31, 32, 41, 42].includes(fdi)) continue;
+                    const imgD = await this.loadImageSync(`sujeira_dente${fdi}_modo${assetMode}.png`);
+                    if (imgD.width > 1) {
+                        const off = document.createElement('canvas'); off.width = 1200; off.height = 800;
+                        this.drawCoverImage(off.getContext('2d'), imgD);
+                        this.sujeiraObjects.push({ ctx: off.getContext('2d', {willReadFrequently:true}), canvas: off, alpha: 1, type: (fdi % 10 <= 3) ? 'anterior' : 'posterior', isVertical: [48, 47, 46, 45, 38, 37, 36, 35].includes(fdi), killStarted: false });
+                        let bImg = null;
+                        if (rCount < config.rx) { if (!(mode === 3 && config.skipR.includes(rCount+1))) bImg = await this.loadImageSync(`bacteria_roxa${rCount+1}_modo${assetMode}.png`); rCount++; }
+                        else if (vCount < config.vd) { if (!(mode === 3 && config.skipV.includes(vCount+1))) bImg = await this.loadImageSync(`bacteria_verde${vCount+1}_modo${assetMode}.png`); vCount++; }
+                        if (bImg && bImg.width > 1) {
+                            const bOff = document.createElement('canvas'); bOff.width = 1200; bOff.height = 800;
+                            this.drawCoverImage(bOff.getContext('2d'), bImg);
+                            this.bacterias.push({ ctx: bOff.getContext('2d', {willReadFrequently:true}), canvas: bOff, alpha: 1, killStarted: false });
+                        }
+                    }
+                }
+            }
+            if (mode === 3) {
+                for (let r of ['superior_direita', 'superior_esquerda', 'inferior_direita', 'inferior_esquerda']) {
+                    const imgL = await this.loadImageSync(`sujeira_lingua_${r}.png`);
+                    if (imgL.width > 1) {
+                        const off = document.createElement('canvas'); off.width = 1200; off.height = 800;
+                        this.drawCoverImage(off.getContext('2d'), imgL);
+                        this.sujeiraObjects.push({ ctx: off.getContext('2d', {willReadFrequently:true}), canvas: off, alpha: 1, isLingua: true, isVertical: true, killStarted: false });
+                    }
+                }
+            }
+        }
+
+        loadImageSync(s) { return new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(new Image()); i.src = s; }); }
+
+        createFoam(x, y) {
+            for (let i = 0; i < 15; i++) {
+                this.particles.push({ x: x + (Math.random()-0.5)*70, y: y + (Math.random()-0.5)*70, size: Math.random()*15+5, alpha: 1, vx: (Math.random()-0.5)*3, vy: (Math.random()-0.5)*3, color: `rgba(255, 182, 193,` });
+            }
+        }
+
+        updateCleaning() {
+            if (this.isTransitioning || this.isPaused) return;
+            const tx = this.brush.x, ty = this.brush.y - 85;
+            const dist = Math.sqrt(Math.pow(this.brush.x - this.lastBrushPos.x, 2) + Math.pow(this.brush.y - this.lastBrushPos.y, 2));
+            const isMoving = dist > 2;
+
+            if (isMoving) {
+                const dx = this.brush.x - this.lastBrushPos.x, dy = this.brush.y - this.lastBrushPos.y;
+                let move = (Math.abs(dx) > Math.abs(dy) * 1.2) ? 'hz' : (Math.abs(dy) > Math.abs(dx) * 1.2) ? 'vt' : 'bl';
+                if (move === 'bl' || (this.currentMode === 3 && move === 'vt')) this.createFoam(tx, ty);
+                [...this.sujeiraObjects, ...this.bacterias].forEach(obj => {
+                    const px = obj.ctx.getImageData(tx-25, ty-25, 50, 50).data;
+                    let hit = false;
+                    for (let i = 3; i < px.length; i += 4) { if (px[i] > 40) { hit = true; break; } }
+                    if (hit) {
+                        let speed = 0;
+                        if (!obj.type && !obj.isLingua) speed = 0.05;
+                        else {
+                            if (this.currentMode === 1) speed = (obj.type === 'posterior' && move !== 'bl') || (obj.type === 'anterior' && move === 'bl') ? 0.12 : 0;
+                            else speed = (obj.isVertical && move === 'vt') || (obj.type === 'anterior' && move === 'bl') || (obj.type === 'posterior' && move === 'hz') ? 0.12 : 0;
+                        }
+                        if (speed > 0) { obj.alpha -= speed; this.pontuacao += 2; }
+                    }
+                });
+            }
+
+            const checkAutoKill = (obj) => {
+                if (obj.alpha < 0.2 && obj.alpha > 0 && !obj.killStarted) {
+                    obj.killStarted = true;
+                    setTimeout(() => {
+                        const fade = setInterval(() => {
+                            if (obj.alpha > 0) obj.alpha -= 0.02;
+                            else { obj.alpha = 0; clearInterval(fade); }
+                        }, 50);
+                    }, 4000);
+                }
+            };
+            this.sujeiraObjects.forEach(checkAutoKill);
+            this.bacterias.forEach(checkAutoKill);
+
+            let currentAlphaTotal = 0;
+            this.sujeiraObjects = this.sujeiraObjects.filter(s => { if (s.alpha > 0) currentAlphaTotal += s.alpha; return s.alpha > 0; });
+            this.bacterias = this.bacterias.filter(b => { if (b.alpha > 0) currentAlphaTotal += b.alpha; return b.alpha > 0; });
+
+            const p = Math.ceil((currentAlphaTotal / this.totalInitialAlpha) * 100);
+            document.getElementById('cleanedPercent').textContent = Math.max(0, p);
+            document.getElementById('cleanProgressBar').style.width = p + "%";
+            document.getElementById('scoreDisplay').textContent = this.pontuacao;
+
+            if (p <= 0 && this.sujeiraObjects.length === 0 && !this.isTransitioning) {
+                const phaseTime = (Date.now() - this.phaseStartTime) / 1000;
+                if (phaseTime > 90) this.starPenalty = 1;
+                this.playTransition();
+            }
+
+            this.lastBrushPos = { ...this.brush };
+            this.particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.alpha -= 0.03; if (p.alpha <= 0) this.particles.splice(i, 1); });
+        }
+
+        async playTransition() {
+            if (this.isTransitioning) return;
+            this.isTransitioning = true;
+
+            // Para a música de fase e toca transição
+            audioManager.stopAll();
+            audioManager.playTransicao();
+
+            const v = document.getElementById('transitionVideo');
+            v.src = `transicao_fase${this.currentMode}.mp4`;
+            document.getElementById('videoOverlay').style.display = 'block';
+
+            // Pausa música durante o vídeo
+            v.onplay = () => audioManager.pauseAll();
+            v.play().catch(() => { setTimeout(() => { v.onended && v.onended(); }, 2000); });
+            v.onended = () => {
+                document.getElementById('videoOverlay').style.display = 'none';
+                audioManager.resumeCurrent();
+                if (this.currentMode < 3) {
+                    this.startMode(this.currentMode + 1);
+                } else {
+                    this.showVictory();
+                }
+            };
+        }
+
+        showVictory() {
+            if (this._timerInterval) clearInterval(this._timerInterval);
+
+            const finalTime = this.totalSeconds;
+            let stars = 3;
+            if (finalTime > 360) stars = 1;
+            else if (finalTime > 240) stars = 2;
+            if (this.starPenalty > 0) stars = Math.max(1, stars - 1);
+
+            const starsUI = document.querySelectorAll('.star');
+            starsUI.forEach((s, idx) => { s.classList.remove('active'); if(idx < stars) s.classList.add('active'); });
+
+            document.getElementById('finalTime').textContent = document.getElementById('timerDisplay').textContent;
+            document.getElementById('finalScore').textContent = this.pontuacao;
+
+            // Mostrar tela de vitória em tela cheia
+            document.getElementById('victoryScreen').style.display = 'flex';
+
+            // Salvar progresso na vitória
+            salvarProgresso('victory_f1');
+        }
+
+        gameLoop() {
+            if (!this.running || this.isPaused) return;
+            this.ctx.clearRect(0, 0, 1200, 800);
+            const bg = this.assets[`background_modo${this.currentMode}.png`];
+            if (bg) this.drawCoverImage(this.ctx, bg);
+            if (this.currentMode === 3) this.drawCoverImage(this.ctx, this.assets['lingua.png']);
+            [...this.sujeiraObjects, ...this.bacterias].forEach(o => { 
+                this.ctx.save(); this.ctx.globalAlpha = Math.max(0, o.alpha); 
+                this.ctx.drawImage(o.canvas, 0, 0); this.ctx.restore();
+            });
+            this.ctx.globalAlpha = 1;
+            this.updateCleaning();
+            this.particles.forEach(p => { 
+                this.ctx.fillStyle = p.color + p.alpha + ')'; 
+                this.ctx.beginPath(); this.ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); this.ctx.fill(); 
+            });
+            if (this.assets['escova.png'] && !this.isTransitioning) {
+                this.ctx.save(); this.ctx.translate(this.brush.x, this.brush.y);
+                const rotate = (this.currentMode >= 2 && (this.brush.x < 350 || this.brush.x > 850) && this.brush.y > 450) ? 0 : Math.PI/2;
+                this.ctx.rotate(rotate); this.ctx.drawImage(this.assets['escova.png'], -80, -120, 160, 240); this.ctx.restore();
+            }
+            if (this.running && !this.isPaused) {
+                this.gameLoopId = requestAnimationFrame(() => this.gameLoop());
+            }
+        }
+
+        stop() {
+            this.running = false;
+            if (this._timerInterval) clearInterval(this._timerInterval);
+            if (this.gameLoopId) cancelAnimationFrame(this.gameLoopId);
+        }
+    }
+
+    /* ================================================
+       MOTOR FASE 2
+       ================================================ */
+    const gameEngineF2 = {
+        container: document.getElementById('game-container-f2'),
+        player: document.getElementById('f2-player'),
+        score: 0,
+        life: 100,
+        timeRemaining: 180,
+        running: false,
+        isPaused: false,
+        playerX: 340,
+        isDragging: false,
+        isMovingLeft: false,
+        isMovingRight: false,
+        moveSpeed: 11,
+        lastSpawn: 0,
+        activeItems: [],
+        timerInterval: null,
+        gameLoopId: null,
+        
+        baseSpeed: 5,
+        isFrenzy: false,
+        timeJumpState: 0,
+        lastPKeyTime: 0,
+
+        combo: 0,
+        multiplier: 1,
+
+        activeEffects: { shield: false, magnet: false, fluor: false, slow: false },
+        effectTimers: {},
+        gameSpeedMultiplier: 1,
+
+        pausar() {
+            if (!this.running) return;
+            this.isPaused = true;
+            if (this.gameLoopId) cancelAnimationFrame(this.gameLoopId);
+            if (this.timerInterval) clearInterval(this.timerInterval);
+        },
+
+        retomar() {
+            if (!this.isPaused) return;
+            this.isPaused = false;
+            this.timer();
+            this.gameLoopId = requestAnimationFrame((t) => this.loop(t));
+        },
+
+        init() {
+            document.getElementById('screen-start-f2').classList.add('hidden');
+            this.running = true;
+            this.isPaused = false;
+            this.score = 0;
+            this.life = 100;
+            this.timeRemaining = 180;
+            this.combo = 0;
+            this.multiplier = 1;
+            this.isFrenzy = false;
+            this.timeJumpState = 0;
+            this.gameSpeedMultiplier = 1;
+            this.container.classList.remove('frenzy-active', 'slow-active');
+            this.player.innerHTML = `<img src="assets/player.png" style="width:100%; height:100%; pointer-events:none;">`;
+            this.updateUI();
+            this.clearItems();
+            this.setupControls();
+            this.timer();
+            this.gameLoopId = requestAnimationFrame((t) => this.loop(t));
+        },
+
+        clearItems() {
+            this.activeItems.forEach(item => { if (item.el && item.el.parentNode) item.el.remove(); });
+            this.activeItems = [];
+        },
+
+        setupControls() {
+            this.player.onmouseenter = () => { if(this.running && !this.isPaused) this.isDragging = true; };
+            this.player.onmouseleave = () => { this.isDragging = false; };
+            this.player.onmousemove = (e) => {
+                if (!this.running || !this.isDragging || this.isPaused) return;
+                const rect = this.container.getBoundingClientRect();
+                this.playerX = Math.max(0, Math.min(e.clientX - rect.left - 60, 800 - 120));
+            };
+
+            window.onkeydown = (e) => {
+                if (!this.running || this.isPaused) return;
+                if (e.key.toLowerCase() === 'a') this.isMovingLeft = true;
+                if (e.key.toLowerCase() === 'd') this.isMovingRight = true;
+                if (e.key.toLowerCase() === 'p') {
+                    const now = Date.now();
+                    if (now - this.lastPKeyTime < 300) this.jumpTime();
+                    this.lastPKeyTime = now;
+                }
+            };
+            window.onkeyup = (e) => {
+                if (e.key.toLowerCase() === 'a') this.isMovingLeft = false;
+                if (e.key.toLowerCase() === 'd') this.isMovingRight = false;
+            };
+
+            document.getElementById('btn-left-f2').onmousedown = () => { if(!this.isPaused) this.isMovingLeft = true; };
+            document.getElementById('btn-right-f2').onmousedown = () => { if(!this.isPaused) this.isMovingRight = true; };
+            window.onmouseup = () => { this.isMovingLeft = false; this.isMovingRight = false; };
+        },
+
+        jumpTime() {
+            this.timeJumpState++;
+            if (this.timeJumpState === 1) this.timeRemaining = 120;
+            else if (this.timeJumpState === 2) this.timeRemaining = 60;
+            else if (this.timeJumpState === 3) this.timeRemaining = 15;
+            else this.timeJumpState = 0;
+            document.getElementById('ui-time-f2').innerText = this.timeRemaining;
+        },
+
+        spawn() {
+            const rand = Math.random();
+            let type, powerType = null, imgSrc;
+            if (rand < 0.60) { type = 'good'; imgSrc = `assets/good${Math.floor(Math.random() * 3) + 1}.png`; }
+            else if (rand < 0.90) { type = 'bad'; imgSrc = `assets/bad${Math.floor(Math.random() * 3) + 1}.png`; }
+            else {
+                type = 'powerup';
+                const pts = ["shield", "magnet", "fluor", "slow"];
+                powerType = pts[Math.floor(Math.random() * pts.length)];
+                const files = { shield: "powerup_escova.png", magnet: "powerup_fiodental.png", fluor: "powerup_pasta.png", slow: "powerup_enxaguante.png" };
+                imgSrc = `assets/${files[powerType]}`;
+            }
+            const el = document.createElement('div');
+            el.className = 'f2-item' + (type === 'powerup' ? ' powerup' : '');
+            el.innerHTML = `<img src="${imgSrc}" style="width:100%; height:100%;">`;
+            el.style.left = Math.random() * (800 - 80) + 'px';
+            el.style.top = '-80px';
+            this.container.appendChild(el);
+            this.activeItems.push({ el, y: -80, type, powerType });
+        },
+
+        activateFrenzy() {
+            if(this.isFrenzy) return;
+            this.isFrenzy = true;
+            // Modo calmo: sem animação piscante
+            if (!modoCalmoAtivo) {
+                this.container.classList.add('frenzy-active');
+            }
+        },
+
+        activateEffect(type) {
+            this.activeEffects[type] = true;
+            if (type === "shield") {
+                const old = document.getElementById('visual-shield-f2'); if(old) old.remove();
+                const s = document.createElement('div'); s.id = 'visual-shield-f2'; s.className = 'shield-aura';
+                this.player.appendChild(s);
+            }
+            if (type === "slow") { this.gameSpeedMultiplier = 0.5; this.container.classList.add('slow-active'); }
+            this.updateEffectsUI();
+            clearTimeout(this.effectTimers[type]);
+            this.effectTimers[type] = setTimeout(() => {
+                this.activeEffects[type] = false;
+                if (type === "shield" && document.getElementById('visual-shield-f2')) document.getElementById('visual-shield-f2').remove();
+                if (type === "slow") { this.gameSpeedMultiplier = 1; this.container.classList.remove('slow-active'); }
+                this.updateEffectsUI();
+            }, 5000);
+        },
+
+        updateEffectsUI() {
+            const c = document.getElementById('effects-container-f2'); c.innerHTML = '';
+            const icons = { shield: '🛡️', magnet: '🧲', fluor: '🦷', slow: '❄️' };
+            for (let k in this.activeEffects) { if (this.activeEffects[k]) c.innerHTML += `<div class="effect-icon">${icons[k]}</div>`; }
+        },
+
+        loop(time) {
+            if (!this.running || this.isPaused) return;
+
+            const progress = 1 - (this.timeRemaining / 180);
+            const acceleration = Math.pow(progress, 2);
+            
+            // Modo calmo: frenesi mais lento
+            const frenesiMultiplier = modoCalmoAtivo ? 0.5 : 1;
+            
+            let currentSpeed = this.baseSpeed + (acceleration * 5);
+            let currentSpawnRate = 1200 - (acceleration * 900);
+
+            if (this.timeRemaining <= 15) {
+                this.activateFrenzy();
+                currentSpeed += 3 * frenesiMultiplier;
+                currentSpawnRate = modoCalmoAtivo ? 400 : 200;
+            }
+
+            if (this.isMovingLeft) this.playerX -= this.moveSpeed;
+            if (this.isMovingRight) this.playerX += this.moveSpeed;
+            this.playerX = Math.max(0, Math.min(this.playerX, 800 - 120));
+            this.player.style.left = this.playerX + 'px';
+            
+            if (time - this.lastSpawn > Math.max(300, currentSpawnRate)) { this.spawn(); this.lastSpawn = time; }
+            
+            for (let i = this.activeItems.length - 1; i >= 0; i--) {
+                const item = this.activeItems[i];
+                
+                if (this.activeEffects.fluor && item.type === "bad") { item.el.remove(); this.activeItems.splice(i, 1); continue; }
+                if (this.activeEffects.magnet && item.type === "good") {
+                    let curX = parseFloat(item.el.style.left);
+                    item.el.style.left = (curX + (this.playerX - curX) * 0.05) + "px";
+                }
+
+                item.y += currentSpeed * this.gameSpeedMultiplier;
+                item.el.style.top = item.y + 'px';
+                
+                const p = this.player.getBoundingClientRect();
+                const it = item.el.getBoundingClientRect();
+                
+                if (!(p.right < it.left + 15 || p.left > it.right - 15 || p.bottom < it.top + 15 || p.top > it.bottom - 15)) {
+                    if (item.type === 'good') { 
+                        this.combo++; this.multiplier = 1 + Math.floor(this.combo / 3);
+                        this.score += 50 * this.multiplier; this.life = Math.min(100, this.life + 10);
+                        this.showCombo();
+                    } else if (item.type === 'bad') { 
+                        this.combo = 0; this.multiplier = 1; this.showCombo(); 
+                        if (this.activeEffects.shield) { 
+                            this.activeEffects.shield = false;
+                            const s = document.getElementById('visual-shield-f2'); if(s) s.remove();
+                            this.updateEffectsUI();
+                        } else { this.life -= 20; }
+                    } else if (item.type === 'powerup') { this.activateEffect(item.powerType); }
+                    item.el.remove(); this.activeItems.splice(i, 1); this.updateUI();
+                } else if (item.y > 600) { item.el.remove(); this.activeItems.splice(i, 1); }
+            }
+            
+            if (this.life <= 0) this.end(false);
+            else if (this.timeRemaining <= 0) this.checkWin();
+            else this.gameLoopId = requestAnimationFrame((t) => this.loop(t));
+        },
+
+        showCombo() {
+            const el = document.getElementById('combo-display-f2');
+            if(this.combo > 1) { el.innerText = `COMBO X${this.multiplier} (${this.combo})`; el.style.opacity = 1; el.style.transform = "scale(1.2)"; setTimeout(() => el.style.transform = "scale(1)", 100); }
+            else el.style.opacity = 0;
+        },
+
+        updateUI() {
+            const s = [100, 80, 60, 50, 40, 20, 10, 5].find(v => this.life >= v) || 5;
+            document.getElementById('ui-score-f2').innerText = this.score;
+            document.getElementById('ui-time-f2').innerText = this.timeRemaining;
+            document.getElementById('tooth-img-f2').src = `assets/dente_${s}.png`;
+            document.getElementById('bar-inner-img-f2').src = `assets/barra_dentro_${s}.png`;
+        },
+
+        timer() {
+            if(this.timerInterval) clearInterval(this.timerInterval);
+            this.timerInterval = setInterval(() => { 
+                if (this.running && !this.isPaused && this.timeRemaining > 0) { 
+                    this.timeRemaining--; 
+                    document.getElementById('ui-time-f2').innerText = this.timeRemaining; 
+                } 
+            }, 1000);
+        },
+
+        checkWin() {
+            const maxEstimated = 10000; 
+            const desempenho = (this.score / maxEstimated) * 100;
+            this.end(desempenho >= 50);
+        },
+
+        end(vitoria) {
+            this.running = false;
+            this.isPaused = false;
+            if (this.timerInterval) clearInterval(this.timerInterval);
+            if (this.gameLoopId) cancelAnimationFrame(this.gameLoopId);
+            this.clearItems();
+            
+            const screen = document.getElementById('screen-game-over-f2');
+            const title = document.getElementById('end-title-f2');
+            const stats = document.getElementById('end-stats-f2');
+            
+            screen.classList.remove('hidden');
+            if (vitoria) {
+                title.innerText = "VITÓRIA! SORRISO JURÁSSICO!";
+                title.style.color = "#4caf50";
+                stats.innerText = `Pontuação: ${this.score} - PARABÉNS!`;
+            } else {
+                title.innerText = "DERROTA! TENTE NOVAMENTE!";
+                title.style.color = "#f44336";
+                stats.innerText = `Pontuação: ${this.score}`;
+            }
+        }
+    };
+
+    /* ================================================
+       NAVEGAÇÃO E TRANSIÇÕES
+       ================================================ */
+    function mostrarTela(id) {
+        document.querySelectorAll('.tela-jogo').forEach(t => t.style.display = 'none');
+        if (id) document.getElementById(id).style.display = 'flex';
+        telaAtual = id || 'main-menu';
+        salvarProgresso(telaAtual);
+    }
+
+    function iniciarFluxoJogo() {
+        document.getElementById('main-menu').style.display = 'none';
+        audioManager.stopAll();
+        audioManager.playTransicao();
+        paginaAtual = 1; 
+        mostrarPaginaHistoria();
+        document.getElementById('tela-historia').style.display = 'flex';
+        telaAtual = 'tela-historia';
+        salvarProgresso('historia');
+    }
+    
+    function mostrarPaginaHistoria() {
+        document.getElementById('tela-historia').style.backgroundImage = `url('pagina_historia_${paginaAtual}.png')`;
+    }
+    
+    function avancarHistoria() {
+        audioManager.sfxPagina();
+        if (paginaAtual < totalPaginas) { 
+            paginaAtual++; 
+            mostrarPaginaHistoria(); 
+            salvarProgresso('historia');
+        }
+        else { iniciarCarregamento('tutorial_f1'); }
+    }
+    
+    function pularHistoria(event) { 
+        event.stopPropagation(); 
+        audioManager.sfxPagina();
+        iniciarCarregamento('tutorial_f1'); 
+    }
+    
+    function iniciarCarregamento(destino) {
+        document.querySelectorAll('.tela-jogo').forEach(t => t.style.display = 'none');
+        document.getElementById('tela-carregamento').style.display = 'flex';
+        const dica = bancoDicas[Math.floor(Math.random() * bancoDicas.length)];
+        document.getElementById('img-dica').src = dica.img;
+        document.getElementById('dica-titulo').innerText = dica.titulo;
+        document.getElementById('dica-subtexto').innerText = dica.subtexto;
+        let p = 0;
+        const iv = setInterval(() => {
+            p += 2; 
+            document.getElementById('barra-progresso').style.width = p + '%';
+            if(p >= 100) {
+                clearInterval(iv);
+                document.getElementById('tela-carregamento').style.display = 'none';
+                if(destino === 'tutorial_f1') { document.getElementById('tela-tutorial').style.display = 'flex'; salvarProgresso('tutorial_f1'); }
+                else if(destino === 'tutorial_f2') { document.getElementById('tela-tutorial-f2').style.display = 'flex'; salvarProgresso('tutorial_f2'); }
+                else if(destino === 'tutorial_f3') { document.getElementById('tela-tutorial-f3').style.display = 'flex'; salvarProgresso('tutorial_f3'); }
+            }
+        }, 50);
+    }
+
+    function iniciarFase1() {
+        document.querySelectorAll('.tela-jogo').forEach(t => t.style.display = 'none');
+        document.getElementById('tela-fase1').style.display = 'flex';
+        
+        if (fase1Engine) { fase1Engine.stop(); fase1Engine = null; }
+        
+        // Troca música para fase
+        audioManager.stopAll();
+        audioManager.playFase();
+
+        fase1Engine = new MestreDoSorriso();
+        fase1Engine.init();
+        telaAtual = 'fase1';
+        salvarProgresso('fase1');
+    }
+
+    function finalizarFase1(vitoria) {
+        if (fase1Engine) { fase1Engine.stop(); fase1Engine = null; }
+        
+        document.getElementById('tela-fase1').style.display = 'none';
+        document.getElementById('victoryScreen').style.display = 'none';
+
+        audioManager.stopAll();
+        audioManager.playTransicao();
+
+        const telaRes = document.getElementById('tela-resultado-f1');
+        telaRes.style.display = 'flex';
+        telaRes.style.backgroundImage = vitoria ? "url('vitoria_f1.png')" : "url('derrota_f1.png')";
+        telaAtual = 'resultado_f1';
+        salvarProgresso('resultado_f1');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const victoryBtn = document.getElementById('victoryBtn');
+        if (victoryBtn) {
+            victoryBtn.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                finalizarFase1(true);
+            };
+        }
+
+        // Carrega volume salvo
+        const save = carregarProgresso();
+        if (save) {
+            if (save.volume !== undefined) ajustarVolumeGlobal(save.volume);
+            if (save.modoCalmo) {
+                modoCalmoAtivo = true;
+                audioManager.modoCalmo = true;
+                document.body.classList.add('modo-calmo-ativo');
+                document.getElementById('btn-calmo').innerText = 'Modo Calmo: ON';
+            }
+        }
+
+        // Inicia música do menu
+        audioManager.playMenu();
+    });
+
+    function irParaIntroF2() {
+        document.getElementById('tela-resultado-f1').style.display = 'none';
+        const tela = document.getElementById('tela-intro-f2');
+        tela.style.display = 'flex';
+        tela.style.backgroundImage = "url('introducao_f2.png')";
+        telaAtual = 'intro_f2'; salvarProgresso('intro_f2');
+    }
+    
+    function irParaContextoF2() {
+        audioManager.sfxPagina();
+        document.getElementById('tela-intro-f2').style.display = 'none';
+        const tela = document.getElementById('tela-contexto-f2');
+        tela.style.display = 'flex';
+        tela.style.backgroundImage = "url('contexto_f2.png')";
+        telaAtual = 'contexto_f2'; salvarProgresso('contexto_f2');
+    }
+    
+    function iniciarCarregamentoParaTutorialF2() { 
+        audioManager.sfxPagina();
+        iniciarCarregamento('tutorial_f2'); 
+    }
+    
+    function prepararFase2() {
+        document.querySelectorAll('.tela-jogo').forEach(t => t.style.display = 'none');
+        document.getElementById('tela-fase2').style.display = 'flex';
+
+        // Música de fase
+        audioManager.stopAll();
+        audioManager.playFase();
+
+        telaAtual = 'fase2'; salvarProgresso('fase2');
+    }
+
+    function finalizarFase2(vitoria) {
+        if (gameEngineF2.running) gameEngineF2.end(vitoria);
+        document.getElementById('tela-fase2').style.display = 'none';
+
+        audioManager.stopAll();
+        audioManager.playTransicao();
+
+        const telaRes = document.getElementById('tela-resultado-f2');
+        telaRes.style.display = 'flex';
+        telaRes.style.backgroundImage = vitoria ? "url('vitoria_f2.png')" : "url('derrota_f2.png')";
+        telaAtual = 'resultado_f2'; salvarProgresso('resultado_f2');
+    }
+
+    function irParaIntroF3() {
+        document.getElementById('tela-resultado-f2').style.display = 'none';
+        const tela = document.getElementById('tela-intro-f3');
+        tela.style.display = 'flex';
+        tela.style.backgroundImage = "url('introducao_f3.png')";
+        telaAtual = 'intro_f3'; salvarProgresso('intro_f3');
+    }
+    
+    function irParaContextoF3() {
+        audioManager.sfxPagina();
+        document.getElementById('tela-intro-f3').style.display = 'none';
+        const tela = document.getElementById('tela-contexto-f3');
+        tela.style.display = 'flex';
+        tela.style.backgroundImage = "url('contexto_f3.png')";
+        telaAtual = 'contexto_f3'; salvarProgresso('contexto_f3');
+    }
+    
+    function iniciarCarregamentoParaTutorialF3() { 
+        audioManager.sfxPagina();
+        iniciarCarregamento('tutorial_f3'); 
+    }
+    
+    function iniciarFase3() {
+        document.querySelectorAll('.tela-jogo').forEach(t => t.style.display = 'none');
+        document.getElementById('tela-fase3').style.display = 'flex';
+        telaAtual = 'fase3'; salvarProgresso('fase3');
+    }
+
+    /* AUXILIARES */
+    function abrirConfig() { 
+        document.getElementById('config-modal').style.display='block'; 
+        document.getElementById('modal-overlay').style.display='block';
+        audioManager.pauseAll();
+    }
+    function fecharConfig() { 
+        document.getElementById('config-modal').style.display='none'; 
+        document.getElementById('modal-overlay').style.display='none';
+        audioManager.resumeCurrent();
+    }
+    function sair() { if(confirm("Sair?")) window.close(); }
+    function creditos() { alert("Sorriso Jurássico - Educativo"); }
+    </script>
+</body>
+</html>
